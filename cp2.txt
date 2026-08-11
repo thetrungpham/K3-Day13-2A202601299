@@ -1,0 +1,129 @@
+4. Block 2 — Metrics, Traces, Dashboard & Alerts (Checkpoint CP2)
+⏱ Thời gian: 60 phút · Bắt đầu: 1:30
+
+Bây giờ chúng ta sẽ nâng cấp hệ thống: từ chỗ chỉ ghi log đơn lẻ sang khả năng giám sát toàn diện thông qua Traces, Dashboard tập trung, đặt chỉ số cam kết chất lượng dịch vụ (SLO) và thiết lập Alert kèm Runbook xử lý sự cố.
+
+Phần A — Traces trên Langfuse
+Nếu đã cấu hình Langfuse keys trong .env, traces tự động được ghi khi gọi /chat (nhờ decorator @observe trong agent.py).
+
+Tạo tối thiểu 10 traces:
+
+# Chạy load test — 10 sample queries
+python scripts/load_test.py
+Copy
+Mở Langfuse Dashboard → chọn project → xem danh sách traces. Mỗi trace hiển thị:
+
+Trace ID duy nhất
+User ID (hash)
+Session ID
+Tags (lab, feature, model)
+Waterfall — timeline các span (mặc định chỉ có span cha tên run)
+Evidence cần thu thập:
+
+Screenshot danh sách ≥ 10 traces
+Screenshot một trace waterfall đầy đủ (thấy span run và thời gian)
+Lưu vào submission/evidence/
+Lưu ý
+·
+Cấu hình Langfuse là bắt buộc
+Vui lòng không bỏ qua bước cấu hình Langfuse. Hãy đảm bảo bạn đã lấy đúng API credentials từ project trên Langfuse Cloud và cấu hình trong file .env trước khi khởi động API server. Việc thiếu bằng chứng trace và waterfall trace sẽ làm ảnh hưởng trực tiếp đến điểm đánh giá kỹ thuật nhóm của bạn.
+
+Lưu ý
+·
+Phần mở rộng (Không bắt buộc): Ghi nhận Trace cho các Sub-components
+Mặc định, decorator @observe chỉ được gắn trên hàm run của LabAgent. Do đó waterfall trace chỉ hiển thị một span cha duy nhất là run. Để có thể nhìn rõ waterfall phân tách giữa RAG và LLM (rất hữu ích cho việc tìm root cause ở CP3), bạn có thể thực hiện phần mở rộng sau:
+
+Mở app/mock_rag.py, import observe và gắn decorator lên hàm retrieve:
+from .tracing import observe
+
+@observe(as_type="span")
+def retrieve(message: str) -> list[str]:
+    # ...
+Copy
+Mở app/mock_llm.py, làm tương tự cho hàm generate của class FakeLLM:
+from .tracing import observe
+
+class FakeLLM:
+    # ...
+    @observe(as_type="span")
+    def generate(self, prompt: str) -> FakeResponse:
+        # ...
+Copy
+Sau khi gắn, khi chạy load test, trace waterfall của bạn trên Langfuse sẽ hiển thị đầy đủ các sub-spans retrieve và generate lồng bên dưới run.
+
+Phần B — Thiết kế Dashboard
+Mở file docs/dashboard-spec.md. Dashboard cần đủ 6 nhóm chỉ số (theo yêu cầu trong file):
+
+#	Nhóm	Nguồn dữ liệu	Ví dụ panel
+1	Latency	/metrics → latency_p50, latency_p95, latency_p99	Biểu đồ Line hoặc Single Value P50/P95/P99
+2	Traffic	/metrics → traffic	Counter tổng số request hoặc QPS gauge
+3	Error	/metrics → error_rate_pct, error_breakdown	Tỷ lệ lỗi (%) và bảng breakdown theo loại lỗi
+4	Cost	/metrics → total_cost_usd, avg_cost_usd	Tổng chi phí hiện tại so với ngưỡng ngân sách
+5	Tokens	/metrics → tokens_in_total, tokens_out_total	Tổng số token input/output đã tiêu thụ
+6	Quality	/metrics → quality_avg	Điểm chất lượng trung bình của hệ thống
+Gọi endpoint /metrics để xem dữ liệu hiện tại:
+
+curl http://localhost:8000/metrics | python -m json.tool
+Copy
+Ghi rõ trong docs/dashboard-spec.md:
+
+Tên panel, đơn vị, khoảng thời gian mặc định
+Threshold hoặc SLO line
+Công cụ sử dụng (Langfuse, Grafana, hoặc mô tả bằng spec)
+Evidence: Chụp ảnh dashboard (nếu dùng Langfuse/Grafana) hoặc điền đầy đủ spec vào file.
+
+Phần C — SLO & Alert Rules
+SLO: Mở config/slo.yaml, điều chỉnh cho phù hợp với nhóm. Giá trị mặc định:
+
+slis:
+  latency_p95_ms:
+    objective: 3000      # P95 dưới 3 giây
+    target: 99.5         # 99.5% requests
+  error_rate_pct:
+    objective: 2         # Error rate dưới 2%
+    target: 99.0
+  daily_cost_usd:
+    objective: 2.5       # Chi phí dưới $2.5/ngày
+    target: 100.0
+  quality_score_avg:
+    objective: 0.75      # Quality score trung bình ≥ 0.75
+    target: 95.0
+Copy
+Alert Rules: Mở config/alert_rules.yaml, điền 3 alert rules. Mỗi alert phải dựa trên triệu chứng (user-facing), không dựa trên tên implementation:
+
+alerts:
+  - name: high_latency_p95
+    severity: warning
+    condition: "latency_p95 > 3000ms for 5 minutes"
+    type: symptom-based
+    owner: on-call-engineer
+    runbook: docs/alerts.md#alert-1
+  - name: elevated_error_rate
+    severity: critical
+    condition: "error_rate_pct > 5 for 3 minutes"
+    type: symptom-based
+    owner: on-call-engineer
+    runbook: docs/alerts.md#alert-2
+  - name: cost_budget_exceeded
+    severity: warning
+    condition: "daily_cost_usd > 2.5"
+    type: symptom-based
+    owner: team-lead
+    runbook: docs/alerts.md#alert-3
+Copy
+Alert Runbook: Mở docs/alerts.md, điền đầy đủ cho 3 alerts. Mỗi alert cần:
+
+Tên, severity, SLI/SLO liên quan
+Điều kiện kích hoạt
+Ảnh hưởng tới người dùng
+Ba bước kiểm tra đầu tiên (đây là phần quan trọng nhất)
+Mitigation tạm thời
+Owner
+Tự kiểm
+·
+✅ CHECKPOINT CP2 — Metrics, Traces, Dashboard & Alerts
+Tiêu chí nghiệm thu:
+
+Kết quả kiểm tra: Có tối thiểu 10 traces hiển thị trên giao diện Langfuse. Thiết kế dashboard ghi đủ 6 nhóm chỉ số kỹ thuật. Hoàn thiện file cấu hình cảnh báo config/alert_rules.yaml và tài liệu hướng dẫn xử lý docs/alerts.md.
+Bằng chứng (Evidence): Ảnh chụp danh sách trace, waterfall span và cấu hình dashboard lưu trong thư mục submission/evidence/.
+Câu hỏi phản biện: Tại sao các cảnh báo kỹ thuật (Alert rules) nên được thiết kế dựa trên triệu chứng người dùng thấy (Symptom-based) thay vì dựa trên lỗi hệ thống hay tên hàm cụ thể?

@@ -27,6 +27,14 @@ def record_error(error_type: str) -> None:
     ERRORS[error_type] += 1
 
 
+def error_rate_pct() -> float:
+    total_errors = sum(ERRORS.values())
+    total_attempts = TRAFFIC + total_errors
+
+    if total_attempts == 0:
+        return 0.0
+
+    return round((total_errors / total_attempts) * 100, 2)
 
 def percentile(values: list[int], p: int) -> float:
     if not values:
@@ -48,5 +56,6 @@ def snapshot() -> dict:
         "tokens_in_total": sum(REQUEST_TOKENS_IN),
         "tokens_out_total": sum(REQUEST_TOKENS_OUT),
         "error_breakdown": dict(ERRORS),
+        "error_rate_pct": error_rate_pct(),
         "quality_avg": round(mean(QUALITY_SCORES), 4) if QUALITY_SCORES else 0.0,
     }
