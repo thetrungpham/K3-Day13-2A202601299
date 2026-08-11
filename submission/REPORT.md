@@ -61,7 +61,7 @@ Với mỗi thành viên, ghi rõ nhiệm vụ và link commit/PR tương ứng.
 
 | Thành viên | Phần việc | Commit/PR | Điều đã học |
 |---|---|---|---|
-| Vũ Thành Dương (2A202602007) | Làm phần CP1 về xử lý và bảo vệ PII (Redaction) | (Điền commit/PR) | Cách sử dụng RegEx để giấu dữ liệu nhạy cảm trong log. |
-| Lê Thành Nam (2A202601397) | CP1: Sinh và truyền Correlation ID xuyên suốt request, gán log metadata. | (Điền commit/PR) | Hiểu được tầm quan trọng của Context Variables và Correlation ID trong việc truy vết. |
-| Chu Phú Thành (2A202601289) | CP2: Tích hợp Langfuse, tạo dashboard đo error_rate_pct, thiết kế SLO, Alert rules & Runbook. | (Điền commit/PR) | Cách xác định ngưỡng SLO hợp lý và quy trình xử lý sự cố qua Runbook. |
-| Phạm Thế Trung (2A202601299) | CP3: Điều tra incident, trace span, phân tích log để tìm ra root cause (`rag_slow`), đề xuất giải pháp. | (Điền commit/PR) | Cách kết hợp Metrics -> Traces -> Logs để phân tích lỗi hệ thống thực tế. |
+| Vũ Thành Dương (2A202602007) | Làm phần CP1 về xử lý và bảo vệ PII (Redaction) | sercurity and compliance | Cách sử dụng RegEx để giấu dữ liệu nhạy cảm trong log. |
+| Lê Thành Nam (2A202601397) | CP1: Sinh và truyền Correlation ID xuyên suốt request, gán log metadata. | A update | Hiểu được tầm quan trọng của Context Variables và Correlation ID trong việc truy vết. |
+| Chu Phú Thành (2A202601289) | CP2: Tích hợp Langfuse, tạo dashboard đo error_rate_pct, thiết kế SLO, Alert rules & Runbook. | hoan thien cp2 | Cách xác định ngưỡng SLO hợp lý và quy trình xử lý sự cố qua Runbook. |
+| Phạm Thế Trung (2A202601299) | CP3: Điều tra incident, trace span, phân tích log để tìm ra root cause (`rag_slow`), đề xuất giải pháp. | update: CP3, Update commit SHA in REPORT.md | Cách kết hợp Metrics -> Traces -> Logs để phân tích lỗi hệ thống thực tế. |
