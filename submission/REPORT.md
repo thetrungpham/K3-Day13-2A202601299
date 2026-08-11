@@ -4,7 +4,7 @@
 
 - Tên nhóm: 4aesieunhan
 - Repository URL: (https://github.com/thetrungpham/K3-Day13-2A202601299)
-- Commit SHA cuối: (Điền mã commit của bạn)
+- Commit SHA cuối: f23ae2f
 - Thành viên và vai trò:
   - Vũ Thành Dương (2A202602007): CP1 (PII)
   - Lê Thành Nam (2A202601397): CP1 (Correlation ID, gán log metadata)
